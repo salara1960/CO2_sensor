@@ -148,7 +148,9 @@ uint8_t rdMem = rdNone;
 	//const char *version = "ver.1.5 15.01.2022 API";//add 'sion' and 'sioff' commands - dump ON/OFF data from si7021
 	//const char *version = "ver.1.6 18.01.2022 API";
 	//const char *version = "ver.1.6.1 19.01.2022 API";
-	const char *version = "ver.1.6.2 20.01.2022 API";
+	//const char *version = "ver.1.6.2 20.01.2022 API";
+	//const char *version = "ver.1.6.3 21.01.2022 API";
+	const char *version = "ver.1.6.4 22.01.2022 API";
 #else
 	//const char *version = "ver.0.3 13.12.2021 DEBUG";
 	//const char *version = "ver.0.4 16.12.2021 DEBUG";
@@ -207,7 +209,7 @@ static void MX_I2C1_Init(void);
 
 uint32_t get_tmr10(uint32_t ms);
 bool check_tmr10(uint32_t ms);
-int sec_to_str(char *stx);
+int sec2str(char *st);//int sec_to_str(char *stx);
 void errLedOn(bool on);
 static char *errName(uint32_t err);
 uint8_t Report(const char *tag, bool addTime, const char *fmt, ...);
@@ -221,7 +223,6 @@ uint8_t Report(const char *tag, bool addTime, const char *fmt, ...);
 	uint8_t getEvtCount();
 	void putEvt(evt_t evt);
 	evt_t getEvt();
-	int sec2str(char *st);
 
 #endif
 
@@ -243,11 +244,13 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
 #ifndef BOOT_LOADER
+
 	#ifdef RELEASE
 		__disable_irq();
 		SCB->VTOR = API_START_ADR;//0x8008000
 		__enable_irq();
 	#endif
+
 #endif
 
 
@@ -317,10 +320,8 @@ int main(void)
   		if (HAL_DMA_Start_IT(dmaMem, addr, (uint32_t)&hdr, sizeof(api_hdr_t)) != HAL_OK) devError |= devDma;
   		else {
   			uint8_t sch = 100;
-    		while(!dmaDone && --sch) {
-    			HAL_Delay(1);
-    		}
-    		if (!sch && !dmaDone) devError |= devDma;
+  			while(!dmaDone && --sch) HAL_Delay(1);
+  			if (!sch && !dmaDone) devError |= devDma;
   		}
     } else devError |= devDma;
 
@@ -334,12 +335,12 @@ int main(void)
     	LOOP_FOREVER();
     } else {
     	Logger(name, true, "Hdr(0x%X): mark=0x%X adr=0x%X len=0x%X crc=0x%X%s",
-        								(unsigned int)addr,
-    									(unsigned int)hdr.mark,
-    									(unsigned int)hdr.adr,
-    									(unsigned int)hdr.len,
-    									(unsigned int)hdr.crc,
-    									eol);
+        					(unsigned int)addr,
+    						(unsigned int)hdr.mark,
+    						(unsigned int)hdr.adr,
+    						(unsigned int)hdr.len,
+    						(unsigned int)hdr.crc,
+    						eol);
     }
 
     if (vpin == GPIO_PIN_SET) {
@@ -392,12 +393,12 @@ int main(void)
     					}
     				}
     				Logger(name, true, "Hdr(0x%X): mark=0x%X adr=0x%X len=0x%X crc=0x%X%s",
-    								(unsigned int)addr,
-									(unsigned int)Hdr->mark,
-									(unsigned int)Hdr->adr,
-									(unsigned int)Hdr->len,
-									(unsigned int)Hdr->crc,
-									eol);
+    									(unsigned int)addr,
+										(unsigned int)Hdr->mark,
+										(unsigned int)Hdr->adr,
+										(unsigned int)Hdr->len,
+										(unsigned int)Hdr->crc,
+										eol);
     			}
     		}
 
@@ -459,7 +460,7 @@ int main(void)
 
 	strcpy(stx, "Register callback function 'dmaTransferDone()' ");
 	if (dmaMemStatus == HAL_OK) strcat(stx, "OK");
-						   else strcat(stx, "Error");
+                           else strcat(stx, "Error");
 	Report(NULL, true, "%s%s", stx, eol);
 
 
@@ -496,7 +497,6 @@ int main(void)
 	int32_t temp = 0, pres = 0, humi = 0, tmr_sens = 0;
 	uint8_t data_rdx[DATA_LENGTH] = {0};
 	char sensName[8] = {0};
-	//uint32_t stim = 0, etim = 0;
 	uint32_t sch = 0;
 	int8_t schet = -1;
 	//
@@ -520,7 +520,6 @@ int main(void)
 	//
 #elif defined(SET_SI7021)
 	bool sensReady = false;
-	//uint32_t stim = 0, etim = 0;
 	uint32_t sch = 0;
 	uint8_t schet = 0;
 	const uint32_t wait_next = _50ms;
@@ -562,7 +561,6 @@ int main(void)
 				Report(NULL, true, "[que:%u] BMx280 Not Present !%s", cntEvt, eol);
 			break;
 			case evt_bmpBegin:
-				//stim = HAL_GetTick();
 				if (i2c_master_test_sensor(&regs) == HAL_OK) {
 					evt_sens = evt_bmpNext;
 					tmr_sens = get_tmr10(wait_next);
@@ -587,7 +585,6 @@ int main(void)
 				if (regs.id == BME280_SENSOR) humi = (data_rdx[6] << 8) | data_rdx[7];
 				bmx280_CalcAll(&sens, regs.id, temp, pres, humi);
 				sensReady = true;
-				//etim = HAL_GetTick();
 				evt_sens = evt_bmpPrn;
 				tmr_sens = get_tmr10(wait_next);
 			break;
@@ -596,7 +593,7 @@ int main(void)
 				if (sch == 8) {
 					sch = 0;
 					sprintf(stx, "[que:%u] press=%.2f temp=%.2f humi=%.2f ppm=%d",
-							cntEvt, //etim - stim,
+							cntEvt,
 							sens.pres,
 							sens.temp,
 							sens.humi,
@@ -616,7 +613,7 @@ int main(void)
 				}
 				evt_sens = evt_bmpBegin;
 				schet++;
-				schet &= 1;////if (schet >= 2) schet = 1;
+				schet &= 1;
 				tmr_sens = get_tmr10(_1s25);
 			break;
 #elif defined(SET_SI7021)
@@ -632,7 +629,6 @@ int main(void)
 				}
 			break;
 			case evt_siReadT:
-				//stim = HAL_GetTick();
 				si7021_read_temp();
 
 				if (devError & devI2C) {
@@ -645,7 +641,6 @@ int main(void)
 			break;
 			case evt_siReadH:
 				si7021_read_humi();
-				//etim = HAL_GetTick();
 				sensReady = true;
 
 				if (devError & devI2C) {
@@ -661,7 +656,7 @@ int main(void)
 				if (sch == 8) {
 					sch = 0;
 					sprintf(stx, "[que:%u] temp=%.2f humi=%.2f ppm=%d",
-							cntEvt, //etim - stim,
+							cntEvt,
 							sens.temp,
 							sens.humi,
 							(int)ppm);
@@ -671,7 +666,7 @@ int main(void)
 					uint16_t cvet = MAGENTA;
 					if (sens.humi <= 0) cvet = RED;
 					sprintf(bufik, "Humi : %.2f%% ", sens.humi);
-					uint8_t step = 8 + fh32;//step += fh16 + 4;
+					uint8_t step = 8 + fh32;
 					dispcolor_DrawString(64, y + step, FONTID_16F, bufik, cvet);
 					sprintf(bufik, "Temp : %.2f%c ", sens.temp, 0xb0);
 					if (sens.temp > 0) cvet = CYAN;
@@ -684,7 +679,7 @@ int main(void)
 				else
 					evt_sens = evt_siReadT;
 				schet++;
-				schet &= 1;//if (schet >= 2) schet = 1;
+				schet &= 1;
 				if (si_dump) {
 					Report(NULL, true,
 							"humi: val=0x%02X%02X crc=0x%02X/0x%02X "
@@ -763,13 +758,13 @@ int main(void)
 	  		break;
 	  		case evt_dmaHdr:
 	  			Report(NULL, true, "[que:%u] Hdr(0x%X): mark=0x%X adr=0x%X len=0x%X crc=0x%X%s",
-	  				  	  	  	 cntEvt,
-								 (unsigned int)SPEC_AREA_ADR,
-								 (unsigned int)hdr.mark,
-								 (unsigned int)hdr.adr,
-								 (unsigned int)hdr.len,
-								 (unsigned int)hdr.crc,
-								 eol);
+	  								cntEvt,
+									(unsigned int)SPEC_AREA_ADR,
+									(unsigned int)hdr.mark,
+									(unsigned int)hdr.adr,
+									(unsigned int)hdr.len,
+									(unsigned int)hdr.crc,
+									eol);
 	  		break;
 	  		case evt_readFW:
 	  			if (dmaMemStatus == HAL_OK) {
@@ -1387,6 +1382,7 @@ int sec2str(char *st)
 	return (sprintf(st, "%lu.%02lu:%02lu:%02lu ", day, hour, min, sec));
 }
 //-----------------------------------------------------------------------------------------
+/*
 int sec_to_str(char *stx)
 {
 	uint32_t sec = get_secCounter();
@@ -1400,6 +1396,7 @@ int sec_to_str(char *stx)
 
 	return (sprintf(stx, "%lu.%02lu:%02lu:%02lu | ", day, hour, min, sec));
 }
+*/
 //-------------------------------------------------------------------------------------------
 uint8_t Report(const char *tag, bool addTime, const char *fmt, ...)
 {
@@ -1409,7 +1406,11 @@ int dl = 0;
 char *buff = &txBuf[0];
 
 	*buff = '\0';
-	if (addTime) dl = sec_to_str(buff);
+	if (addTime) {
+		dl = sec2str(buff);
+		strcat(buff, "| ");
+		dl += 2;
+	}
 
 	if (tag) dl += sprintf(buff+strlen(buff), "[%s] ", tag);
 	va_start(args, fmt);
@@ -1429,9 +1430,9 @@ char *buff = &txBuf[0];
 //-------------------------------------------------------------------------------------------
 
 #ifndef BOOT_LOADER
+//*******************************************************************************************
 
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------
 void dmaTransferDone(DMA_HandleTypeDef *dmem)
 {
 	if (dmem == dmaMem) {
@@ -1444,7 +1445,6 @@ void dmaTransferDone(DMA_HandleTypeDef *dmem)
 		if (ev != evt_none) putEvt(ev);
 	}
 }
-
 //-------------------------------------------------------------------------------------------
 uint8_t getEvtCount()
 {
@@ -1528,11 +1528,14 @@ evt_t ret = evt_empty;
 
 	return ret;
 }
-//-------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
+
+#ifdef SET_MQ135
+
+//----------------------------------------------------------------------------------------
 //   Функция добавляет в кольцевой буфер очередной замер,
 //    полученный при оцифровке данных с аналогового выхода MQ135
 //
-#ifdef SET_MQ135
 uint8_t adcAddVal(uint16_t value)
 {
 int8_t i;
@@ -1571,7 +1574,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 //-----------------------------------------------------------------------------------------
 //   Функция вызывается по готовности очередного оцифрованного значения замеров
 //    с аналогового выхода MQ135. Здесь же выполняется фильтрация полученных
-//    замеров в сользящем окне 'шириной' в MAX_ADC_BUF замеров.
+//    замеров в скользящем окне 'шириной' в MAX_ADC_BUF замеров.
 //    Результат фильтрации помещается в глобальную переменную valMQ.
 //
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
@@ -1593,20 +1596,25 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 {
 	if (hadc->Instance == ADC1) devError |= devADC;
 }
+//-----------------------------------------------------------------------------------------
 
 #endif
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-#ifdef SET_SPI_DISPLAY
 
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
+#ifdef SET_SPI_DISPLAY
+//-----------------------------------------------------------------------
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi->Instance == SPI2) lcdRdy = 1;
 }
+//-----------------------------------------------------------------------
 #endif
+
 //-----------------------------------------------------------------------
 
+//*******************************************************************************************
 #endif
 
 //-----------------------------------------------------------------------
@@ -1631,8 +1639,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		//
 		if (rxByte == 0x0a) {//end of line
 			rxBuf[rxInd] = '\0';
-#ifdef BOOT_LOADER
 			if (rxInd > 0) if (rxBuf[rxInd - 1] == '\r') rxBuf[rxInd - 1] = '\0';
+#ifdef BOOT_LOADER
 			char *ui = NULL;
 			if ((ui = strstr(rxBuf, _progfw))) {//const char *_progfw = "prog:17308:0x4549ABBB";
 				if (ui == rxBuf) {
@@ -1688,10 +1696,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				}
 			} else if ((ui = strstr(rxBuf, _done))) {
 				if (ui == rxBuf) {
-					//if (!startAPI) {
-						startAPI = true;
-						apiCmd = apiDone;
-					//}
+					startAPI = true;
+					apiCmd = apiDone;
 				}
 			}
 #else
@@ -1726,7 +1732,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					fwLen = atol(ul + 1);
 					if (fwLen > PAGE_SIZE) fwLen = PAGE_SIZE;
 				    *ul = '\0';
-				} else fwLen = PAGE_SIZE;
+				} else {
+					fwLen = PAGE_SIZE;
+				}
 				if (ua) {
 					fwAdr = 0;
 					if (strstr(ua, "0x")) {
@@ -1763,10 +1771,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		//
 	}
 }
+//-----------------------------------------------------------------------
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	if ((huart->Instance == USART1) || (huart->Instance == USART2)) devError |= devUART;
 }
+//-----------------------------------------------------------------------
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == USART1) uartReady = true;
@@ -1776,31 +1786,32 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 #endif
 }
 
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 #if defined(SET_BME280) || defined(SET_SI7021)
 
-	void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
-	{
-		if (hi2c->Instance == I2C1) devError |= devI2C;
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c->Instance == I2C1) devError |= devI2C;
+}
+//-----------------------------------------------------------------------------
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c->Instance == I2C1) {
+		i2c_txReady = 1;
 	}
-	//-----------------------------------------------------------------------------
-	void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
-	{
-		if (hi2c->Instance == I2C1) {
-			i2c_txReady = 1;
-		}
+}
+//-----------------------------------------------------------------------------
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+	if (hi2c->Instance == I2C1) {
+		i2c_rxReady = 1;
 	}
-	void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
-	{
-		if (hi2c->Instance == I2C1) {
-			i2c_rxReady = 1;
-		}
-	}
+}
 
 #endif
 
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == TIM3) {// период срабатывания 10 мсек.

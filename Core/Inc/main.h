@@ -321,7 +321,7 @@ uint8_t rdMem;
 
 uint32_t get_tmr10(uint32_t ms);
 bool check_tmr10(uint32_t ms);
-int sec_to_str(char *stx);
+int sec2str(char *stx);
 void errLedOn(bool on);
 uint8_t Report(const char *tag, bool addTime, const char *fmt, ...);
 

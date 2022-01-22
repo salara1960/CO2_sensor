@@ -177,7 +177,11 @@ void Logger(const char *tag, bool addTime, const char *fmt, ...)
 	char *buff = &logBuf[0];
 
 	*buff = '\0';
-	if (addTime) dl = sec_to_str(buff);
+	if (addTime) {
+		dl = sec2str(buff);
+		strcat(buff, "| ");
+		dl += 2;
+	}
 
 	if (tag) dl += sprintf(buff+strlen(buff), "[%s] ", tag);
 	va_start(args, fmt);
