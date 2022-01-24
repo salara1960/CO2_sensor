@@ -71,7 +71,10 @@ const char *_get     = "get";
 const char *_readfw  = "read:";
 const char *_getVer  = "ver";
 const char *_getHdr  = "hdr";
+const char *_mint  = "min";
+const char *_maxt  = "max";
 
+uint32_t until_value = 8;
 
 bool bootMode;
 
@@ -150,7 +153,8 @@ uint8_t rdMem = rdNone;
 	//const char *version = "ver.1.6.1 19.01.2022 API";
 	//const char *version = "ver.1.6.2 20.01.2022 API";
 	//const char *version = "ver.1.6.3 21.01.2022 API";
-	const char *version = "ver.1.6.4 22.01.2022 API";
+	//const char *version = "ver.1.6.4 22.01.2022 API";
+	const char *version = "ver.1.6.5 24.01.2022 API";
 #else
 	//const char *version = "ver.0.3 13.12.2021 DEBUG";
 	//const char *version = "ver.0.4 16.12.2021 DEBUG";
@@ -589,8 +593,9 @@ int main(void)
 				tmr_sens = get_tmr10(wait_next);
 			break;
 			case evt_bmpPrn:
-				sch++;
-				if (sch == 8) {
+				if (until_value < 8) sch = 1;
+								else sch++;
+				if (sch >= until_value) {
 					sch = 0;
 					sprintf(stx, "[que:%u] press=%.2f temp=%.2f humi=%.2f ppm=%d",
 							cntEvt,
@@ -652,8 +657,9 @@ int main(void)
 				}
 			break;
 			case evt_siPrn:
-				sch++;
-				if (sch == 8) {
+				if (until_value < 8) sch = 1;
+				                else sch++;
+				if (sch >= until_value) {
 					sch = 0;
 					sprintf(stx, "[que:%u] temp=%.2f humi=%.2f ppm=%d",
 							cntEvt,
@@ -1707,6 +1713,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 					restart_flag = 1;
 					return;
 				}
+			} else if (!strncmp(rxBuf, _mint, strlen(_mint))) {//const char *_mint = "min";
+				until_value = 1;
+				putEvt(evt_getMQ);
+			} else if (!strncmp(rxBuf, _maxt, strlen(_maxt))) {//const char *_maxt = "max";
+				until_value = 8;
+				putEvt(evt_getMQ);
 			}
 #ifdef SET_MQ135
 			else if (!strncmp(rxBuf, _get, strlen(_get))) {//const char *_get = "get";
