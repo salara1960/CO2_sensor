@@ -18,6 +18,11 @@
 	#define SET_SI7021_DUMP
 #endif
 
+#define SET_BLE
+#ifdef SET_BLE
+	#define SET_QUEUE
+#endif
+
 //#define SET_SWV
 
 

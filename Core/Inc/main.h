@@ -40,6 +40,8 @@ extern "C" {
 #include <time.h>
 #include <math.h>
 #include <stdarg.h>
+#include <ctype.h>
+
 
 #include "hdr.h"
 
@@ -82,7 +84,8 @@ enum {
 enum {
 	rdNone = 0,
 	rdApi,
-	rdHdr
+	rdHdr,
+	bleAck
 };
 
 #pragma pack(push,1)
@@ -152,8 +155,34 @@ typedef struct q_rec_t {
 		evt_siReadH,
 		evt_siPrn,
 		evt_errCmd,
+		evt_bleCmd,
+		evt_bleCmdNext,
+		evt_bleAck,
+		evt_bleNoAck,
 		evt_none
 	} evt_t;
+
+#endif
+
+#ifdef SET_QUEUE
+
+#define MAX_QREC 32
+
+#pragma pack(push,1)
+typedef struct que_rec_t {
+	int8_t id;
+	char *adr;
+} que_rec_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct s_recq_t {
+	volatile uint8_t lock;
+	uint8_t put;
+	uint8_t get;
+	que_rec_t rec[MAX_QREC];
+} s_recq_t;
+#pragma pack(pop)
 
 #endif
 
@@ -199,6 +228,12 @@ void Error_Handler(void);
 #define LCD_MOSI_GPIO_Port GPIOB
 #define LCD_RST_Pin GPIO_PIN_8
 #define LCD_RST_GPIO_Port GPIOA
+#define TX_BLE_Pin GPIO_PIN_11
+#define TX_BLE_GPIO_Port GPIOA
+#define RX_BLE_Pin GPIO_PIN_12
+#define RX_BLE_GPIO_Port GPIOA
+#define PWRC_BLE_Pin GPIO_PIN_8
+#define PWRC_BLE_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 #define LOOP_FOREVER() while(1) { HAL_Delay(1); }
@@ -287,6 +322,30 @@ DMA_HandleTypeDef *dmaMem;
 
 	SPI_HandleTypeDef *lcdPort;
 	volatile uint8_t lcdRdy;
+#endif
+
+#ifdef SET_BLE
+	#define CMD_LEN      48
+	#define ACK_LEN      32
+	#define total_bleCMD  5
+
+	enum {
+		iRESET = 0,
+		iVERSION,
+		iLADDR
+	};
+
+	#pragma pack(push,1)
+	typedef struct {
+		char cmd[CMD_LEN];
+		char ack[ACK_LEN];
+	} ble_cmd_t;
+	#pragma pack(pop)
+
+	#define BLE_CMD()  HAL_GPIO_WritePin(PWRC_BLE_GPIO_Port, PWRC_BLE_Pin, GPIO_PIN_RESET)
+	#define BLE_DATA() HAL_GPIO_WritePin(PWRC_BLE_GPIO_Port, PWRC_BLE_Pin, GPIO_PIN_SET)
+
+	UART_HandleTypeDef *blePort;
 #endif
 
 bool bootMode;
