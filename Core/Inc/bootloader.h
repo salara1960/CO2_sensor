@@ -14,7 +14,8 @@
 
 
 #define SET_FW_PROG
-#define SET_LOGGER
+
+//#define SET_LOGGER
 
 //-------------------------------------------------------------------
 
@@ -84,9 +85,9 @@ const uint32_t crc32_tab[256];
 	uint8_t logByte;
 	bool logReady;
 	extern UART_HandleTypeDef *logPort;
-	void Logger(const char *tag, bool addTime, const char *fmt, ...);
 #endif
 
+void Logger(const char *tag, bool addTime, const char *fmt, ...);
 uint32_t crc32(const uint32_t orig, const uint8_t *buf, uint32_t size);
 void HAL_FLASH_EndOfOperationCallback(uint32_t ReturnValue);
 void dmaCB(DMA_HandleTypeDef *dmem);

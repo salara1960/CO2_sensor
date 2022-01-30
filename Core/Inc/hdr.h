@@ -8,7 +8,6 @@
 #ifndef __HDR_H_
 #define __HDR_H_
 
-
 #define SET_SPI_DISPLAY
 
 #define SET_MQ135
@@ -18,9 +17,11 @@
 	#define SET_SI7021_DUMP
 #endif
 
-#define SET_BLE
-#ifdef SET_BLE
-	#define SET_QUEUE
+#ifndef BOOT_LOADER
+	#define SET_BLE
+	#ifdef SET_BLE
+		#define SET_QUEUE
+	#endif
 #endif
 
 //#define SET_SWV

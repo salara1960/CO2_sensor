@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./util --mode=prog --file=new.bin --dev=/dev/ttyUSB0
+./util --mode=prog --file=new.bin --dev=/dev/ttyUSB0 --dbg=dump
 
 sleep 3
 

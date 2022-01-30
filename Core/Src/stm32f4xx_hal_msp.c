@@ -106,7 +106,8 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
   if(hadc->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspInit 0 */
-#ifdef SET_MQ135
+#ifndef BOOT_LOADER
+	#ifdef SET_MQ135
   /* USER CODE END ADC1_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_ADC1_CLK_ENABLE();
@@ -124,6 +125,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     HAL_NVIC_SetPriority(ADC_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
+	#endif
 #endif
   /* USER CODE END ADC1_MspInit 1 */
   }
@@ -141,7 +143,8 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
   if(hadc->Instance==ADC1)
   {
   /* USER CODE BEGIN ADC1_MspDeInit 0 */
-#ifdef SET_MQ135
+#ifndef BOOT_LOADER
+	#ifdef SET_MQ135
   /* USER CODE END ADC1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_ADC1_CLK_DISABLE();
@@ -154,6 +157,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     /* ADC1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
+	#endif
 #endif
   /* USER CODE END ADC1_MspDeInit 1 */
   }
@@ -172,7 +176,8 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
   if(hi2c->Instance==I2C1)
   {
   /* USER CODE BEGIN I2C1_MspInit 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END I2C1_MspInit 0 */
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -233,6 +238,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
     HAL_NVIC_SetPriority(I2C1_ER_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
   /* USER CODE BEGIN I2C1_MspInit 1 */
+	#endif
 #endif
   /* USER CODE END I2C1_MspInit 1 */
   }
@@ -250,7 +256,8 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
   if(hi2c->Instance==I2C1)
   {
   /* USER CODE BEGIN I2C1_MspDeInit 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END I2C1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_I2C1_CLK_DISABLE();
@@ -271,6 +278,7 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
     HAL_NVIC_DisableIRQ(I2C1_EV_IRQn);
     HAL_NVIC_DisableIRQ(I2C1_ER_IRQn);
   /* USER CODE BEGIN I2C1_MspDeInit 1 */
+	#endif
 #endif
   /* USER CODE END I2C1_MspDeInit 1 */
   }
@@ -501,7 +509,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   else if(huart->Instance==USART2)
   {
   /* USER CODE BEGIN USART2_MspInit 0 */
-#ifdef BOOT_LOADER
+#ifdef SET_LOGGER
   /* USER CODE END USART2_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_USART2_CLK_ENABLE();
@@ -634,7 +642,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   else if(huart->Instance==USART2)
   {
   /* USER CODE BEGIN USART2_MspDeInit 0 */
-#ifdef BOOT_LOADER
+#ifdef SET_LOGGER
   /* USER CODE END USART2_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_USART2_CLK_DISABLE();

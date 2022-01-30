@@ -1,4 +1,4 @@
-"./Core/Src/bmp280.o"
+"./Core/Src/bmx280.o"
 "./Core/Src/bootloader.o"
 "./Core/Src/dispcolor.o"
 "./Core/Src/f16f.o"

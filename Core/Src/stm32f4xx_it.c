@@ -232,10 +232,12 @@ void FLASH_IRQHandler(void)
 void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
-#ifdef SET_MQ135
+#ifndef BOOT_LOADER
+	#ifdef SET_MQ135
   /* USER CODE END EXTI2_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(digMQ_Pin);
   /* USER CODE BEGIN EXTI2_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END EXTI2_IRQn 1 */
 }
@@ -246,10 +248,12 @@ void EXTI2_IRQHandler(void)
 void DMA1_Stream0_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END DMA1_Stream0_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_i2c1_rx);
   /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END DMA1_Stream0_IRQn 1 */
 }
@@ -260,10 +264,12 @@ void DMA1_Stream0_IRQHandler(void)
 void DMA1_Stream1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END DMA1_Stream1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_i2c1_tx);
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END DMA1_Stream1_IRQn 1 */
 }
@@ -288,7 +294,7 @@ void DMA1_Stream4_IRQHandler(void)
 void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
-#ifdef BOOT_LOADER
+#ifdef SET_LOGGER
   /* USER CODE END DMA1_Stream6_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart2_tx);
   /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
@@ -302,10 +308,12 @@ void DMA1_Stream6_IRQHandler(void)
 void ADC_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC_IRQn 0 */
-#ifdef SET_MQ135
+#ifndef BOOT_LOADER
+	#ifdef SET_MQ135
   /* USER CODE END ADC_IRQn 0 */
   HAL_ADC_IRQHandler(&hadc1);
   /* USER CODE BEGIN ADC_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END ADC_IRQn 1 */
 }
@@ -330,10 +338,12 @@ void TIM3_IRQHandler(void)
 void I2C1_EV_IRQHandler(void)
 {
   /* USER CODE BEGIN I2C1_EV_IRQn 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END I2C1_EV_IRQn 0 */
   HAL_I2C_EV_IRQHandler(&hi2c1);
   /* USER CODE BEGIN I2C1_EV_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END I2C1_EV_IRQn 1 */
 }
@@ -344,10 +354,12 @@ void I2C1_EV_IRQHandler(void)
 void I2C1_ER_IRQHandler(void)
 {
   /* USER CODE BEGIN I2C1_ER_IRQn 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END I2C1_ER_IRQn 0 */
   HAL_I2C_ER_IRQHandler(&hi2c1);
   /* USER CODE BEGIN I2C1_ER_IRQn 1 */
+	#endif
 #endif
   /* USER CODE END I2C1_ER_IRQn 1 */
 }
@@ -386,7 +398,7 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-#ifdef BOOT_LOADER
+#ifdef SET_LOGGER
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */

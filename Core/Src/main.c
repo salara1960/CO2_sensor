@@ -76,7 +76,7 @@ const char *_getHdr  = "hdr";
 const char *_mint  = "min";
 const char *_maxt  = "max";
 
-uint32_t until_value = 8;
+uint32_t until_value = MAX_UNTIL_VALUE;
 
 bool bootMode;
 
@@ -84,7 +84,6 @@ bool bootMode;
 	UART_HandleTypeDef *blePort = &huart6;
 	bool bleReady = true;
 	char ble_txBuf[MAX_UART_BUF] = {0};
-	//char ble_rxBuf[MAX_UART_BUF] = {0};
 
 	uint8_t rxByteBle;
 	uint16_t rxIndBle = 0;
@@ -98,6 +97,7 @@ bool bootMode;
 		{"AT+NAME", "\r\n"},
 		{"AT+VERSION", "\r\n"},
 		{"AT+LADDR", "\r\n"},
+		{"AT+ROLE", "\r\n"},
 		{"AT+STAT", "\r\n"}
 	};
 
@@ -352,7 +352,6 @@ int main(void)
 
   	HAL_Delay(1000);
 
-
   	Logger(NULL, false, "%s", eol);
   	int vpin = HAL_GPIO_ReadPin(BOOT_PORT_PIN, BOOT_PIN);
   	Logger(name, true, "Start %s with BOOT_PIN=%d%s", version, vpin, eol);
@@ -400,7 +399,7 @@ int main(void)
     }
 
     if (vpin == GPIO_PIN_SET) {
-    	if ( (hdr.mark == API_MARKER) && (hdr.adr == API_START_ADR) && hdr.len && hdr.crc ) {
+    	if ( (hdr.mark == API_MARKER) && (hdr.adr == API_START_ADR) && hdr.len && (hdr.crc != 0xFFFFFFFF)) {
     		noApi = false;
     	}
     }
@@ -581,7 +580,7 @@ int main(void)
 	}
 	if (regs.id) {
 		if (strlen(sensName)) Report(NULL, true, "BMx280 chip '%s'(0x%X)%s", sensName, regs.id, eol);
-		tmr_sens = get_tmr10(wait_next);
+		tmr_sens = get_tmr10(_10ms);
 	} else {
 		putEvt(evt_bmpNone);
 	}
@@ -593,8 +592,9 @@ int main(void)
 	const uint32_t wait_next = _50ms;
 	const char *sensName = "SI7021";
 
-	uint32_t tmr_sens = get_tmr10(wait_next);
+	uint32_t tmr_sens = get_tmr10(_50ms);
 	evt_t evt_sens = evt_siReset;
+	bool frst = true;
 #endif
 
 
@@ -603,7 +603,7 @@ int main(void)
 	char ble[128];
 	tmr_ble = 0;
 	evt_t evt_ble = evt_bleCmd;//putEvt(evt_ble);
-	tmr_ble_next = get_tmr10(_2s);
+	tmr_ble_next = get_tmr10(_2s5);
 #endif
 
 
@@ -682,8 +682,8 @@ int main(void)
 				tmr_sens = get_tmr10(wait_next);
 			break;
 			case evt_bmpPrn:
-				if (until_value < 8) sch = 1;
-								else sch++;
+				if (until_value < MAX_UNTIL_VALUE) sch = 1;
+											  else sch++;
 				if (sch >= until_value) {
 					sch = 0;
 					sprintf(stx, "[que:%u] press=%.2f temp=%.2f humi=%.2f ppm=%d",
@@ -746,8 +746,8 @@ int main(void)
 				}
 			break;
 			case evt_siPrn:
-				if (until_value < 8) sch = 1;
-				                else sch++;
+				if (until_value < MAX_UNTIL_VALUE) sch = 1;
+				                			  else sch++;
 				if (sch >= until_value) {
 					sch = 0;
 					sprintf(stx, "[que:%u] temp=%.2f humi=%.2f ppm=%d",
@@ -784,6 +784,15 @@ int main(void)
 							eol);
 				}
 				tmr_sens = get_tmr10(_1s25);
+				//
+				if (frst) {
+					if ((sens.temp + sens.humi) != 0.0) {
+						//Report(NULL, true, "[que:%u] temp=%.2f humi=%.2f ppm=%d%s", cntEvt, sens.temp, sens.humi, (int)ppm, eol);
+						putEvt(evt_getMQ);
+						frst = false;
+					}
+				}
+				//
 			break;
 #endif
 	  		case evt_rst:
@@ -799,10 +808,13 @@ int main(void)
 	  			if (valMQ != lastMQ) {
 	  				lastMQ = valMQ;
 	  				if (sensReady) {
-	  					//rzero = MQ135_getRZero();
-	  					//ppm = MQ135_getPPM();
-	  					rzero = MQ135_getCorrectedRZero(sens.temp, sens.humi);
-	  					ppm = MQ135_getCorrectedPPM(sens.temp, sens.humi);
+	  					if (!sens.temp && !sens.humi) {
+	  						rzero = MQ135_getRZero();
+	  						ppm = MQ135_getPPM();
+	  					} else {
+	  						rzero = MQ135_getCorrectedRZero(sens.temp, sens.humi);
+	  						ppm = MQ135_getCorrectedPPM(sens.temp, sens.humi);
+	  					}
 	  					sprintf(bufik, "CO2 : %.3f%% ", ppm / 1000);
 	  					dispcolor_DrawString(56, y - fh32, FONTID_24F, bufik, ppmColor(ppm));
 	  				}
@@ -1028,7 +1040,7 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE BEGIN ADC1_Init 0 */
 #ifndef BOOT_LOADER
-#ifdef SET_MQ135
+	#ifdef SET_MQ135
   /* USER CODE END ADC1_Init 0 */
 
   ADC_ChannelConfTypeDef sConfig = {0};
@@ -1064,7 +1076,7 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-#endif
+	#endif
 #endif
   /* USER CODE END ADC1_Init 2 */
 
@@ -1079,7 +1091,8 @@ static void MX_I2C1_Init(void)
 {
 
   /* USER CODE BEGIN I2C1_Init 0 */
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
   /* USER CODE END I2C1_Init 0 */
 
   /* USER CODE BEGIN I2C1_Init 1 */
@@ -1099,6 +1112,7 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
+	#endif
 #endif
   /* USER CODE END I2C1_Init 2 */
 
@@ -1230,6 +1244,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE BEGIN USART2_Init 0 */
 #ifdef BOOT_LOADER
+	#ifdef SET_LOGGER
   /* USER CODE END USART2_Init 0 */
 
   /* USER CODE BEGIN USART2_Init 1 */
@@ -1248,6 +1263,7 @@ static void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
+	#endif
 #endif
   /* USER CODE END USART2_Init 2 */
 
@@ -1328,8 +1344,10 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA1_Stream6_IRQn interrupt configuration */
+#ifdef SET_LOGGER
   HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+#endif
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 4, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -1996,10 +2014,10 @@ void uartParse()
 				return;
 			}
 		} else if (!strncmp(rxBuf, _mint, strlen(_mint))) {//const char *_mint = "min";
-			until_value = 1;
+			until_value = MIN_UNTIL_VALUE;
 			putEvt(evt_getMQ);
 		} else if (!strncmp(rxBuf, _maxt, strlen(_maxt))) {//const char *_maxt = "max";
-			until_value = 8;
+			until_value = MAX_UNTIL_VALUE;
 			putEvt(evt_getMQ);
 		}
 #ifdef SET_MQ135
@@ -2015,7 +2033,7 @@ void uartParse()
 		}
 #endif
 #ifdef SET_QUEUE
-		else if ( (strstr(rxBuf, "AT+")) || (strstr(rxBuf, "at+")) ) {
+		else if ( (strstr(rxBuf, "AT")) || (strstr(rxBuf, "at")) ) {
 			if (bleQueCmdFlag) {
 				int len = strlen(rxBuf);
 				// Блок помещает в очередь команд очередную команду модулю BLE
@@ -2088,6 +2106,7 @@ void uartParse()
 
 }
 //-----------------------------------------------------------------------
+
 #ifdef SET_QUEUE
 
 void bleParse()
@@ -2169,8 +2188,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 //-----------------------------------------------------------------------------
-
-#if defined(SET_BME280) || defined(SET_SI7021)
+#ifndef BOOT_LOADER
+	#if defined(SET_BME280) || defined(SET_SI7021)
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
@@ -2191,8 +2210,8 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	}
 }
 
+	#endif
 #endif
-
 //-----------------------------------------------------------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {

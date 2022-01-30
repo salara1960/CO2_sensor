@@ -192,6 +192,9 @@ typedef struct s_recq_t {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
+#define MAX_UNTIL_VALUE 6
+#define MIN_UNTIL_VALUE 1
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -291,9 +294,10 @@ void Error_Handler(void);
 #define _1s (_10ms * 100)
 #define _1s25 ((_1s * 1) + _250ms)
 #define _1s3 ((_1s * 1) + _300ms)
-#define _1s5 (_10ms * 150)
+#define _1s5 (_1s + _500ms)
 #define _2s (_1s * 2)
 #define _2s3 ((_1s * 2) + _300ms)
+#define _2s5 ((_1s * 2) + _500ms)
 #define _3s (_1s * 3)
 #define _4s (_1s * 4)
 #define _4s3 ((_1s * 4) + _300ms)
@@ -327,7 +331,7 @@ DMA_HandleTypeDef *dmaMem;
 #ifdef SET_BLE
 	#define CMD_LEN      48
 	#define ACK_LEN      32
-	#define total_bleCMD  5
+	#define total_bleCMD  6
 
 	enum {
 		iRESET = 0,

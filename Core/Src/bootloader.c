@@ -18,7 +18,8 @@
 //const char *version = "ver.1.1 28.12.2021 BOOT";
 //const char *version = "ver.1.2 29.12.2021 BOOT";
 //const char *version = "ver.1.3 03.01.2022 BOOT";
-const char *version = "ver.1.4 13.01.2022 BOOT";
+//const char *version = "ver.1.4 13.01.2022 BOOT";
+const char *version = "ver.1.5 28.01.2022 BOOT";
 
 
 const char *name = "boot";
@@ -64,7 +65,7 @@ const sector_t allFlash[MAX_FLASH_SECTOR] = {
 	{4, 0x8010000, 65536},
 	{5, 0x8020000, 131072},
 	{6, 0x8030000, 131072},
-	{7, 0x8060000, 131072}//20000
+	{7, 0x8060000, 131072}
 };
 
 uint8_t needErase[MAX_FLASH_SECTOR] = {0};
@@ -165,7 +166,7 @@ uint8_t i;
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
-#ifdef SET_LOGGER
+//#ifdef SET_LOGGER
 
 void Logger(const char *tag, bool addTime, const char *fmt, ...)
 {
@@ -199,11 +200,14 @@ void Logger(const char *tag, bool addTime, const char *fmt, ...)
 	}
 
 	va_end(args);
-
+#else
+	//logReady = false;
+	HAL_Delay(1);
+	//logReady = true;
 #endif
 }
 
-#endif
+//#endif
 //----------------------------------------------------------------------
 static void checkSectors()
 {
